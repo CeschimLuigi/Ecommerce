@@ -4,7 +4,8 @@
   "description": "Abacatepay pix",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node src/server/server.js"
   },
   "type": "module",
   "author": "Luigi Ceschim",
@@ -15,6 +16,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "zod": "^3.25.67"
   }
 }
