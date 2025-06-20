@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste PIX</title>
+</head>
+<body>
+    <h2>Gerar PIX</h2>
+    <form id="pixForm">
+        <label for="description">Descrição:</label>
+        <input type="text" id="description" name="description" required><br><br>
+
+        <label for="name">Nome:</label>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="cellphone">Celular:</label>
+        <input type="text" id="cellphone" name="cellphone" required><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required><br><br>
+
+        <label for="taxId">CPF:</label>
+        <input type="text" id="taxId" name="taxId" required><br><br>
+
+        <h3>Itens do Pedido</h3>
+        <div id="itensContainer">
+            <div class="item">
+                <label for="produtoId">ID do Produto:</label>
+                <input type="text" class="produtoId" required><br><br>
+
+                <label for="nome">Nome:</label>
+                <input type="text" class="nome" required><br><br>
+
+                <label for="preco">Preço:</label>
+                <input type="text" class="preco" required><br><br>
+
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" class="quantidade" required><br><br>
+            </div>
+        </div>
+
+        <button type="button" id="addItem">Adicionar Item</button>
+        <br><br>
+
+        <label for="totalAmount">Valor Total:</label>
+        <span id="totalAmount">0.00</span> BRL
+        <br><br>
+
+        <button type="submit">Gerar PIX</button>
+    </form>
+
+    <h3>QR Code:</h3>
+    <img id="qrCode" src="" alt="QR Code PIX" style="max-width: 300px; display: block;">
+
+    <h3>Copia e Cola:</h3>
+    <pre id="copiaECola"></pre>
+    <button id="copyButton">Copiar Código PIX</button>
+
+    <script>
+        document.getElementById("addItem").addEventListener("click", function() {
+            const container = document.getElementById("itensContainer");
+            const newItem = document.createElement("div");
+            newItem.classList.add("item");
+            newItem.innerHTML = `
+                <label for="produtoId">ID do Produto:</label>
+                <input type="text" class="produtoId" required><br><br>
+
+                <label for="nome">Nome:</label>
+                <input type="text" class="nome" required><br><br>
+
+                <label for="preco">Preço:</label>
+                <input type="text" class="preco" required><br><br>
+
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" class="quantidade" required><br><br>
+            `;
+            container.appendChild(newItem);
+        });
+
+        document.getElementById("pixForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const itens = [];
+            let totalAmount = 0;
+
+            document.querySelectorAll(".item").forEach(item => {
+                const produtoId = item.querySelector(".produtoId").value;
+                const nome = item.querySelector(".nome").value;
+                const preco = parseFloat(item.querySelector(".preco").value.replace(",", "."));
+                const quantidade = parseInt(item.querySelector(".quantidade").value);
+
+                if (produtoId && nome && preco && quantidade) {
+                    itens.push({ produtoId, nome, preco, quantidade });
+                    totalAmount += preco * quantidade;
+                }
+            });
+
+            document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
+
+            const payload = {
+                amount: Math.round(totalAmount * 100),
+                description: document.getElementById("description").value,
+                customer: {
+                    name: document.getElementById("name").value,
+                    cellphone: document.getElementById("cellphone").value,
+                    email: document.getElementById("email").value,
+                    taxId: document.getElementById("taxId").value
+                },
+                itens
+            };
+
+            try {
+                const response = await fetch("http://localhost:3000/create-pix", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                const qrCodeBase64 = data?.data?.brCodeBase64;
+                const copiaECola = data?.data?.brCode;
+
+                if (qrCodeBase64) {
+                    document.getElementById("qrCode").src = qrCodeBase64;
+                }
+                if (copiaECola) {
+                    document.getElementById("copiaECola").textContent = copiaECola;
+                }
+            } catch (error) {
+                console.error("Erro na requisição:", error);
+            }
+        });
+
+        document.getElementById("copyButton").addEventListener("click", function() {
+            const copiaEColaTexto = document.getElementById("copiaECola").textContent;
+            navigator.clipboard.writeText(copiaEColaTexto)
+                .then(() => alert("Código PIX copiado!"))
+                .catch(err => console.error("Erro ao copiar:", err));
+        });
+    </script>
+</body>
+</html>
