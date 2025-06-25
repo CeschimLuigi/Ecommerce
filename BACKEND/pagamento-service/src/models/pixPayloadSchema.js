@@ -3,9 +3,9 @@ import { customerSchema } from './customerSchema.js';
 import { itemSchema } from './itensSchema.js';
 
 export const pixPayloadSchema = z.object({
-    pixId: z.string().nullable().optional(),
+    pixId: z.string(),
     amount: z.number().positive(),
-    description: z.string().min(5),
+    description: z.string().min(5).nullable(),
     customer: customerSchema,
     itens: z.array(itemSchema),
     expiresIn: z.number().optional().default(300),
